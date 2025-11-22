@@ -1,0 +1,13 @@
+{
+  "name": "plant-disease-fullstack",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "server": "npm run dev --prefix ./plant-care-fullstack/plant-disease-backend",
+    "client": "npm run dev --prefix ./plant-care-fullstack/plant-care-frontend",
+    "dev": "concurrently \"npm run server\" \"npm run client\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
