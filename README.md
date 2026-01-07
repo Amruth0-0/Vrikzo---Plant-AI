@@ -58,10 +58,29 @@ Start the server & client concurrently
 
 To run this project, you will need to add the following environment variables to your .env file
 
-`GEMINI_API_KEY`
-`OPENWEATHER_API_KEY`
-`EMAIL_USER`
-`EMAIL_PASS`
+`PORT=5000` \
+`MONGODB_URI=your_mongodb_atlas_connection_string` \
+`GEMINI_API_KEY=your_gemini_api_key` \
+`OPENWEATHER_API_KEY=your_openweather_api_key` \
+`EMAIL_USER=your_email_address` \
+`EMAIL_PASS=your_email_password` 
+
+The application requires a valid MongoDB Atlas connection to run.
+
+<br>
+
+## 🗄️ Database Setup
+
+This project uses MongoDB Atlas as its primary database.
+- The database schema and collections are defined using Mongoose models in the codebase
+- No manual database or collection creation is required
+- Collections are automatically created when the application runs and data is inserted
+
+MongoDB Setup Steps:
+1.  Create a cluster on MongoDB Atlas
+2. Copy the cluster connection string
+3. Add the connection string to the MONGODB_URI environment variable
+4. Whitelist your IP address in Atlas network access settings
 
 <br>
 
