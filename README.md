@@ -112,6 +112,7 @@ Fetches existing care reminders for a user.
 ## 👥 Authors
 This project was developed as a collaborative team effort.
 - [@Amruth0-0](https://www.github.com/Amruth0-0)
+- [@Yashwanthdot7](https://www.github.com/Yashwanthdot7)
 
 <br>
 
