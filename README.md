@@ -52,6 +52,23 @@ Start the server & client concurrently
   npm run dev
 ```
 
+In a new terminal simultaneously, move to directory
+
+```bash
+  cd plant-care-fullstack\plant-disease-backend\ml_model
+```
+
+Run the Command to activate the virtual Environment
+
+```bash
+  .\venv\Scripts\activate
+```
+
+Run the python Script
+```bash
+  py cnn_api.py
+```
+
 <br>
 
 ## 🔐 Environment Variables
@@ -110,9 +127,10 @@ Fetches existing care reminders for a user.
 <br>
 
 ## 👥 Authors
-This project was developed as a collaborative team effort.
-- [@Amruth0-0](https://www.github.com/Amruth0-0)
-- [@Yashwanthdot7](https://www.github.com/Yashwanthdot7)
+This project was developed as a collaborative team effort.  
+- Backend APIs, database design, email automation – [@Amruth0-0](https://www.github.com/Amruth0-0)   
+- Frontend UI & Integrations - [@Yashwanthdot7](https://www.github.com/Yashwanthdot7)  
+-  Ml Model & Frontend - @
 
 <br>
 
