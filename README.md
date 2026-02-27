@@ -58,9 +58,9 @@ In a new terminal simultaneously, move to directory
   cd plant-care-fullstack\plant-disease-backend\ml_model
 ```
 
-Run the Command to activate the virtual Environment
-
+ Run the Command create and  activate the virtual Environment
 ```bash
+  python -m venv .venv
   .\venv\Scripts\activate
 ```
 
@@ -130,7 +130,7 @@ Fetches existing care reminders for a user.
 This project was developed as a collaborative team effort.  
 - Backend APIs, database design, email automation – [@Amruth0-0](https://www.github.com/Amruth0-0)   
 - Frontend UI & Integrations - [@Yashwanthdot7](https://www.github.com/Yashwanthdot7)  
--  Ml Model & Frontend - @
+- Ml Model and Dataset - [@Anush-HM](https://www.github.com/Anush-HM)
 
 <br>
 
