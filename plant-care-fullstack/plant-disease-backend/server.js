@@ -7,9 +7,9 @@ import detectRoutes from "./routes/detectRoutes.js";
 import chatbotRoutes from "./routes/chatbot.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import userEmailRoute from "./routes/userEmailRoute.js";
-import  reminderRoutes  from "./routes/reminderRoutes.js";
+import reminderRoutes from "./routes/reminderRoutes.js";
 import { startReminderScheduler } from "./scheduler/reminderScheduler.js";
-import "./scheduler/reminderScheduler.js"; 
+
 
 
 // 🌿 Load environment variables
@@ -36,7 +36,7 @@ startReminderScheduler();
 
 
 // ✅ Correct Gemini initialization
-const genAI = new GoogleGenerativeAI({ apiKey: process.env.GEMINI_API_KEY });
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 export { genAI }; // Allow reuse by controllers (e.g., chatbotController)
 
 // ✅ API Routes

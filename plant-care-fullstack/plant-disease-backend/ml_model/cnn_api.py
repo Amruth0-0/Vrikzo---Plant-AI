@@ -10,7 +10,7 @@ from flask_cors import CORS
 # -----------------------------
 # Load Model + Class Names
 # -----------------------------
-MODEL_PATH = "Vrikzo_model.h5"
+MODEL_PATH = "Vrikzo_model.keras"
 CLASS_PATH = "class_names.json"
 
 try:
@@ -123,5 +123,5 @@ def health():
 
 
 if __name__ == "__main__":
-    print("🚀 Starting CNN API on http://127.0.0.1:8000")
+    print("Starting CNN API on http://127.0.0.1:8000")
     app.run(host="0.0.0.0", port=8000, debug=True)

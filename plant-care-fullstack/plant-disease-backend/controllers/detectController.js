@@ -1,5 +1,8 @@
 import axios from "axios";
 import dotenv from "dotenv";
+import fs from "fs";
+import path from "path";
+import FormData from "form-data";
 
 dotenv.config();
 
@@ -25,8 +28,20 @@ export const detectDisease = async (req, res) => {
     // 🌱 Step 2 — Send image to Flask CNN model
     let detectionResult;
     try {
-      const flaskResponse = await axios.post("http://localhost:8000/predict", {
-        image_path: imagePath,
+      // Build absolute path and send as multipart file upload (Flask expects this)
+      const absoluteImagePath = path.resolve(imagePath);
+      if (!fs.existsSync(absoluteImagePath)) {
+        return res.status(400).json({
+          error: "Image file not found.",
+          message: `Could not locate image at: ${absoluteImagePath}`,
+        });
+      }
+
+      const form = new FormData();
+      form.append("file", fs.createReadStream(absoluteImagePath));
+
+      const flaskResponse = await axios.post("http://localhost:8000/predict", form, {
+        headers: form.getHeaders(),
       });
 
       detectionResult = flaskResponse.data;

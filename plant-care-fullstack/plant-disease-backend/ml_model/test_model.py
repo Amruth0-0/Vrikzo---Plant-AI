@@ -65,11 +65,11 @@ def test_single_image(image_path, model, class_names, IMG_SIZE):
         
         # Determine status
         if confidence >= 85:
-            status = "✅ Confident"
+            status = "Confident"
         elif confidence >= 70:
-            status = "⚠️ Moderate"
+            status = "Moderate"
         else:
-            status = "❌ Uncertain"
+            status = "Uncertain"
         
         # Generate message
         message = generate_message(plant_name, condition, confidence)
@@ -88,7 +88,7 @@ def test_single_image(image_path, model, class_names, IMG_SIZE):
         return {
             "plant": "Unknown",
             "confidence": 0.0,
-            "status": "❌ Error",
+            "status": "Error",
             "message": f"Error processing image: {str(e)}",
             "image": os.path.basename(image_path)
         }
@@ -147,14 +147,14 @@ def calculate_accuracy(results):
 
 def main():
     print("="*70)
-    print("🌿 VRIKZO MODEL TESTING")
+    print("VRIKZO MODEL TESTING")
     print("="*70)
     
     # Load model
-    print("\n🔄 Loading model...")
+    print("\nLoading model...")
     try:
-        model = tf.keras.models.load_model("Vrikzo_model.h5")
-        print("✅ Model loaded successfully")
+        model = tf.keras.models.load_model("Vrikzo_model.keras")
+        print("Model loaded successfully")
     except Exception as e:
         print(json.dumps({
             "error": f"Failed to load model: {str(e)}"
@@ -162,11 +162,11 @@ def main():
         return
     
     # Load class names
-    print("🔄 Loading class names...")
+    print("Loading class names...")
     try:
         with open('class_names.json', 'r') as f:
             class_names = json.load(f)
-        print(f"✅ Loaded {len(class_names)} classes")
+        print(f"Loaded {len(class_names)} classes")
     except Exception as e:
         print(json.dumps({
             "error": f"Failed to load class_names.json: {str(e)}"
@@ -175,7 +175,7 @@ def main():
     
     # Get image size from model
     IMG_SIZE = (model.input_shape[1], model.input_shape[2])
-    print(f"📐 Image size: {IMG_SIZE}")
+    print(f"Image size: {IMG_SIZE}")
     
     # Check command line arguments
     if len(sys.argv) < 2:
@@ -195,7 +195,7 @@ def main():
     
     # Auto mode - test common paths
     if arg == "--auto":
-        print("\n🔄 Running automatic tests...")
+        print("\nRunning automatic tests...")
         test_paths = [
            r"Z:/VrikZo/plant-care-fullstack/plant-disease-backend/ml_model/mini\Aloe_dataset/test",
            r"Z:/VrikZo/plant-care-fullstack/plant-disease-backend/ml_model/mini/hibiscus_dataset",
@@ -204,7 +204,7 @@ def main():
         all_results = []
         for path in test_paths:
             if os.path.exists(path):
-                print(f"\n📂 Testing: {path}")
+                print(f"\nTesting: {path}")
                 results = test_batch_images(path, model, class_names, IMG_SIZE)
                 all_results.extend(results)
         
@@ -217,28 +217,28 @@ def main():
             }
             
             print("\n" + "="*70)
-            print("📊 RESULTS")
+            print("RESULTS")
             print("="*70)
             print(json.dumps(output, indent=2))
             
             # Save to file
             with open('test_results.json', 'w') as f:
                 json.dump(output, f, indent=2)
-            print(f"\n💾 Results saved to: test_results.json")
+            print(f"\nResults saved to: test_results.json")
         
     # Single file mode
     elif os.path.isfile(arg):
-        print(f"\n🔄 Testing single image: {arg}")
+        print(f"\nTesting single image: {arg}")
         result = test_single_image(arg, model, class_names, IMG_SIZE)
         
         print("\n" + "="*70)
-        print("📊 RESULT")
+        print("RESULT")
         print("="*70)
         print(json.dumps(result, indent=2))
     
     # Folder mode
     elif os.path.isdir(arg):
-        print(f"\n🔄 Testing folder: {arg}")
+        print(f"\nTesting folder: {arg}")
         results = test_batch_images(arg, model, class_names, IMG_SIZE)
         
         if results:
@@ -250,14 +250,14 @@ def main():
             }
             
             print("\n" + "="*70)
-            print("📊 RESULTS")
+            print("RESULTS")
             print("="*70)
             print(json.dumps(output, indent=2))
             
             # Save to file
             with open('test_results.json', 'w') as f:
                 json.dump(output, f, indent=2)
-            print(f"\n💾 Results saved to: test_results.json")
+            print(f"\nResults saved to: test_results.json")
     
     else:
         print(json.dumps({
