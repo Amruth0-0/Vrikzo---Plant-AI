@@ -53,7 +53,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
 
     setLoading(true);
     try {
-      await axios.post('http://localhost:5000/api/users/registerEmail', { email });
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/users/registerEmail`, { email });
 
       // ✅ Save logged-in email
       localStorage.setItem("vrikzo_user_email", email);

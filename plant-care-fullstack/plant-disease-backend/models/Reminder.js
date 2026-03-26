@@ -6,6 +6,7 @@ const ReminderSchema = new mongoose.Schema({
   plantName: { type: String, required: true },
   action: { type: String, enum: ["water", "treatment"], required: true },
   scheduleDate: { type: Date, required: true },
+  remedyText: { type: String, default: "" },
   createdAt: { type: Date, default: Date.now },
 });
 

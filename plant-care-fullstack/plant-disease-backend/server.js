@@ -15,7 +15,7 @@ import { startReminderScheduler } from "./scheduler/reminderScheduler.js";
 // 🌿 Load environment variables
 dotenv.config();
 console.log("✅ Loaded GEMINI_API_KEY:", process.env.GEMINI_API_KEY ? "Found" : "❌ Missing");
-console.log("✅ Loaded WEATHER_API_KEY:", process.env.WEATHER_API_KEY ? "Found" : "❌ Missing");
+console.log("✅ Loaded OPENWEATHER_API_KEY:", process.env.OPENWEATHER_API_KEY ? "Found" : "❌ Missing");
 
 // 🌿 Initialize App
 const app = express();
@@ -23,7 +23,7 @@ const app = express();
 // ✅ Middlewares
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: ["http://localhost:3000", "http://localhost:3001"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })

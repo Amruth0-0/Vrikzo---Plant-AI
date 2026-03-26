@@ -18,10 +18,10 @@ const model = genAI.getGenerativeModel({
 });
 
 async function getWeather(city = "bangalore") {
-  const apiKey = process.env.WEATHER_API_KEY;
+  const apiKey = process.env.OPENWEATHER_API_KEY;
 
   if (!apiKey) {
-    console.error("❌ WEATHER_API_KEY missing from environment");
+    console.error("❌ OPENWEATHER_API_KEY missing from environment");
     return null;
   }
 
