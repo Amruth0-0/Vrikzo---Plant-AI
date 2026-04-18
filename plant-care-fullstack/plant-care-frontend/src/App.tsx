@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { HeroLanding } from './components/HeroLanding';
 import { FuturisticPage2 } from './components/FuturisticPage2';
 import { PlantShowcase } from './components/PlantShowcase';
@@ -8,19 +8,8 @@ export default function App() {
   const [chatbotOpen, setChatbotOpen] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
 
-  // 🧊 Freeze background scroll when chatbot is open
-  useEffect(() => {
-    if (chatbotOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'auto';
-    }
+  // Note: scroll lock is managed inside VrikzoAIChatbot to avoid duplicate effects
 
-    // Cleanup on unmount
-    return () => {
-      document.body.style.overflow = 'auto';
-    };
-  }, [chatbotOpen]);
 
   return (
     <div className="min-h-screen bg-black">

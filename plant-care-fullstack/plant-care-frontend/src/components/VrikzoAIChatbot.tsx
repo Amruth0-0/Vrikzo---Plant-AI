@@ -114,23 +114,22 @@ export function VrikzoAIChatbot({
   }, []);
 
   const fetchWeatherNormalized = async () => {
-    const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
-    if (!apiKey) return null;
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
     try {
-      const url = coords
-        ? `https://api.openweathermap.org/data/2.5/weather?lat=${coords.lat}&lon=${coords.lon}&appid=${apiKey}&units=metric`
-        : `https://api.openweathermap.org/data/2.5/weather?q=India&appid=${apiKey}&units=metric`;
+      const query = coords
+        ? `lat=${coords.lat}&lon=${coords.lon}`
+        : "city=Bangalore";
 
-      const res = await fetch(url);
+      const res = await fetch(`${API_URL}/api/weather?${query}`);
       if (!res.ok) return null;
 
       const data = await res.json();
       return {
-        temperature: data.main?.temp ?? 0,
-        humidity: data.main?.humidity ?? 0,
-        condition: data.weather?.[0]?.description ?? "Unknown",
-        city: data.name ?? "Unknown",
+        temperature: data.temp ?? 0,
+        humidity: data.humidity ?? 0,
+        condition: data.condition ?? "Unknown",
+        city: data.city ?? "Unknown",
       };
     } catch {
       return null;
@@ -202,8 +201,7 @@ export function VrikzoAIChatbot({
     setIsTyping(true);
 
     try {
-      const API_URL =
-        (import.meta as any).env?.VITE_API_URL || "http://localhost:5000";
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
       let weatherSnippet = "";
 
@@ -343,8 +341,7 @@ export function VrikzoAIChatbot({
       form.append("file", file);
 
       const predictUrl =
-        (import.meta as any).env?.VITE_PREDICT_URL ||
-        "http://127.0.0.1:8000/predict";
+        import.meta.env.VITE_PREDICT_URL || "http://127.0.0.1:8000/predict";
 
       const res = await fetch(predictUrl, { method: "POST", body: form });
       const result = await res.json();
@@ -413,8 +410,7 @@ export function VrikzoAIChatbot({
       form.append("file", file);
 
       const predictUrl =
-        (import.meta as any).env?.VITE_PREDICT_URL ||
-        "http://127.0.0.1:8000/predict";
+        import.meta.env.VITE_PREDICT_URL || "http://127.0.0.1:8000/predict";
 
       const res = await fetch(predictUrl, { method: "POST", body: form });
       const result = await res.json();
@@ -530,7 +526,7 @@ export function VrikzoAIChatbot({
                 }`}
               >
                 <div
-                  className={`max-w-[75%] px-4 py-3 rounded-2xl ${
+                  className={`max-w-[95%] md:max-w-[75%] px-4 py-3 rounded-2xl ${
                     msg.type === "user"
                       ? "bg-cyan-500/20 border border-cyan-400/30"
                       : "bg-white/10 border border-emerald-400/30"

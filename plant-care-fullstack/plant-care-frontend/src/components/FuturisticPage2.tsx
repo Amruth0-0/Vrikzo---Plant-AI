@@ -10,6 +10,9 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { LoginDialog } from "./LoginDialog";
+import { PlantCareSection } from "./sections/PlantCareSection";
+import { ChatCtaSection } from "./sections/ChatCtaSection";
+import { ActivateCtaSection } from "./sections/ActivateCtaSection";
 
 export function FuturisticPage2({
   onOpenChatbot,
@@ -35,31 +38,40 @@ export function FuturisticPage2({
   const [showLoginDialog, setShowLoginDialog] = useState(false);
 
   /* -----------------------------------------
-   * FETCH WEATHER DATA (runs once)
+   * FETCH WEATHER DATA — proxied via backend
+   * Tries geolocation first, falls back to Bangalore
    * ----------------------------------------- */
   useEffect(() => {
     const fetchWeather = async () => {
       try {
-        const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
+        const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-        if (!apiKey) {
-          console.error("❌ Missing VITE_WEATHER_API_KEY");
-          return;
+        // Try to get user's coordinates
+        let weatherUrl = `${API_URL}/api/weather?city=Bangalore`;
+
+        if (navigator.geolocation) {
+          const pos = await new Promise<GeolocationPosition | null>((resolve) =>
+            navigator.geolocation.getCurrentPosition(resolve, () => resolve(null), {
+              timeout: 5000,
+            })
+          );
+          if (pos) {
+            weatherUrl = `${API_URL}/api/weather?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`;
+          }
         }
 
-        const res = await fetch(
-          `https://api.openweathermap.org/data/2.5/weather?q=Bangalore&appid=${apiKey}&units=metric`
-        );
-
+        const res = await fetch(weatherUrl);
+        if (!res.ok) return;
         const data = await res.json();
         setWeatherData(data);
       } catch (err) {
-        console.error("Weather API Error:", err);
+        console.error("Weather fetch error:", err);
       }
     };
 
     fetchWeather();
   }, []);
+
 
   /* -----------------------------------------
    * SCROLL PERCENTAGE TRACKER
@@ -165,7 +177,7 @@ export function FuturisticPage2({
       {/* ===================================================== */}
       <section
         id="disease-detection"
-        className="relative min-h-screen flex items-center justify-center px-6 py-20"
+        className="relative min-h-screen flex items-center justify-center px-6 py-10 md:py-20 overflow-hidden"
       >
         <div className="max-w-7xl w-full grid md:grid-cols-2 gap-16 items-center">
           {/* ---------------------------------------- */}
@@ -244,9 +256,8 @@ export function FuturisticPage2({
               </span>
             </motion.div>
 
-            {/* Heading */}
             <motion.h2
-              className="text-6xl mb-6 tracking-wider"
+              className="text-4xl md:text-5xl lg:text-6xl mb-6 tracking-wider"
               style={{
                 background: "linear-gradient(to right, #00ff88, #00e6ff)",
                 WebkitBackgroundClip: "text",
@@ -309,27 +320,39 @@ export function FuturisticPage2({
 
                     const confidence = result.confidence || 0;
 
-                    /* WEATHER API */
-                    const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
+                    /* WEATHER — proxied through backend, no key in browser */
+                    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+                    let weatherUrl = `${API_URL}/api/weather?city=Bangalore`;
 
-                    const weatherRes = await fetch(
-                      `https://api.openweathermap.org/data/2.5/weather?q=Bangalore&appid=${apiKey}&units=metric`
-                    );
+                    if (navigator.geolocation) {
+                      const pos = await new Promise<GeolocationPosition | null>((resolve) =>
+                        navigator.geolocation.getCurrentPosition(resolve, () => resolve(null), { timeout: 5000 })
+                      );
+                      if (pos) {
+                        weatherUrl = `${API_URL}/api/weather?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`;
+                      }
+                    }
 
-                    const weatherJson = await weatherRes.json();
+                    let weatherPayload = { temperature: 0, humidity: 0, condition: "", city: "Bangalore" };
+                    try {
+                      const weatherRes = await fetch(weatherUrl);
+                      if (weatherRes.ok) {
+                        const w = await weatherRes.json();
+                        weatherPayload = {
+                          temperature: w.temp ?? 0,
+                          humidity: w.humidity ?? 0,
+                          condition: w.condition || "",
+                          city: w.city || "Bangalore",
+                        };
+                      }
+                    } catch {}
 
                     const payload = {
                       imageUrl: previewUrl,
                       cropName,
                       diseaseName,
                       confidence,
-                      weather: {
-                        temperature: weatherJson.main?.temp,
-                        humidity: weatherJson.main?.humidity,
-                        condition:
-                          weatherJson.weather?.[0]?.description || "",
-                        city: weatherJson.name || "Bangalore",
-                      },
+                      weather: weatherPayload,
                       raw: result,
                     };
 
@@ -362,6 +385,14 @@ export function FuturisticPage2({
                 UPLOAD IMAGE
               </motion.div>
             </label>
+
+            {/* Plant species disclaimer */}
+            <p className="mt-4 text-xs text-gray-600 font-mono tracking-wide">
+              🌿 Currently supports:{" "}
+              <span className="text-emerald-600">Aloe Vera</span>,{" "}
+              <span className="text-emerald-600">Tomato</span>,{" "}
+              <span className="text-emerald-600">Hibiscus</span>
+            </p>
           </div>
         </div>
       </section>
@@ -369,7 +400,7 @@ export function FuturisticPage2({
       {/* ===================================================== */}
       {/* SECTION 2 — WEATHER INTELLIGENCE                      */}
       {/* ===================================================== */}
-      <section className="relative min-h-screen flex items-center justify-center px-6 py-20">
+      <section className="relative min-h-screen flex items-center justify-center px-6 py-10 md:py-20 overflow-hidden">
         <div className="max-w-7xl w-full grid md:grid-cols-2 gap-16 items-center">
           {/* ---------------------------------------- */}
           {/* LEFT — WEATHER CONTENT                   */}
@@ -387,7 +418,7 @@ export function FuturisticPage2({
             </motion.div>
 
             <motion.h2
-              className="text-6xl mb-6 tracking-wider"
+              className="text-4xl md:text-5xl lg:text-6xl mb-6 tracking-wider"
               style={{
                 background: "linear-gradient(to right, #00e6ff, #8800ff)",
                 WebkitBackgroundClip: "text",
@@ -412,8 +443,8 @@ export function FuturisticPage2({
               {/* Temperature */}
               <div className="px-6 py-3 bg-cyan-500/5 border border-cyan-500/30 rounded-lg">
                 <div className="font-mono text-cyan-400">
-                  {weatherData?.main?.temp !== undefined
-                    ? `${weatherData.main.temp}°C`
+                  {weatherData?.temp !== undefined
+                    ? `${weatherData.temp}°C`
                     : "24°C"}
                 </div>
                 <div className="text-sm text-gray-500">Temperature</div>
@@ -422,8 +453,8 @@ export function FuturisticPage2({
               {/* Humidity */}
               <div className="px-6 py-3 bg-cyan-500/5 border border-cyan-500/30 rounded-lg">
                 <div className="font-mono text-cyan-400">
-                  {weatherData?.main?.humidity !== undefined
-                    ? `${weatherData.main.humidity}%`
+                  {weatherData?.humidity !== undefined
+                    ? `${weatherData.humidity}%`
                     : "80%"}
                 </div>
                 <div className="text-sm text-gray-500">Humidity</div>
@@ -515,14 +546,14 @@ export function FuturisticPage2({
 
             {/* HUD Overlays */}
             <div className="absolute top-10 left-10 font-mono text-xs text-cyan-400 opacity-60">
-              {weatherData?.main?.temp !== undefined
-                ? `[TEMP: ${weatherData.main.temp}°C]`
+              {weatherData?.temp !== undefined
+                ? `[TEMP: ${weatherData.temp}°C]`
                 : "[TEMP: 24°C]"}
             </div>
 
             <div className="absolute bottom-10 right-10 font-mono text-xs text-cyan-400 opacity-60">
-              {weatherData?.main?.humidity !== undefined
-                ? `[HUM: ${weatherData.main.humidity}%]`
+              {weatherData?.humidity !== undefined
+                ? `[HUM: ${weatherData.humidity}%]`
                 : "[HUM: 80%]"}
             </div>
           </div>
@@ -532,433 +563,19 @@ export function FuturisticPage2({
       {/* ===================================================== */}
       {/* SECTION 3 — PLANT CARE SYSTEM                         */}
       {/* ===================================================== */}
-      <section className="relative min-h-screen flex items-center justify-center px-6 py-20">
-        <div className="max-w-7xl w-full grid md:grid-cols-2 gap-16 items-center">
-          {/* ---------------------------------------- */}
-          {/* LEFT — NEURAL VISUALIZATION              */}
-          {/* ---------------------------------------- */}
-          <div className="relative h-[500px] flex items-center justify-center">
-            {/* Nodes */}
-            {[...Array(20)].map((_, i) => {
-              const angle = (i / 20) * Math.PI * 2;
-              const radius = 180;
-              const x = Math.cos(angle) * radius;
-              const y = Math.sin(angle) * radius;
-
-              return (
-                <motion.div
-                  key={`node-${i}`}
-                  className="absolute w-4 h-4 rounded-full bg-purple-400"
-                  style={{
-                    left: "50%",
-                    top: "50%",
-                    marginLeft: x,
-                    marginTop: y,
-                    boxShadow: "0 0 10px #8800ff",
-                  }}
-                  animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    delay: i * 0.1,
-                  }}
-                />
-              );
-            })}
-
-            {/* Connections */}
-            <svg className="absolute inset-0 w-full h-full">
-              {[...Array(15)].map((_, i) => {
-                const start = Math.floor(Math.random() * 20);
-                const end = Math.floor(Math.random() * 20);
-                const startAngle = (start / 20) * Math.PI * 2;
-                const endAngle = (end / 20) * Math.PI * 2;
-                const radius = 180;
-
-                return (
-                  <motion.line
-                    key={`line-${i}`}
-                    stroke="#8800ff"
-                    strokeWidth="1"
-                    opacity="0.3"
-                    style={{
-                      x1: `calc(50% + ${Math.cos(startAngle) * radius}px)`,
-                      y1: `calc(50% + ${Math.sin(startAngle) * radius}px)`,
-                      x2: `calc(50% + ${Math.cos(endAngle) * radius}px)`,
-                      y2: `calc(50% + ${Math.sin(endAngle) * radius}px)`,
-                    }}
-                    animate={{ opacity: [0.1, 0.5, 0.1] }}
-                    transition={{
-                      duration: 3,
-                      repeat: Infinity,
-                      delay: i * 0.2,
-                    }}
-                  />
-                );
-              })}
-            </svg>
-
-            {/* Core */}
-            <motion.div
-              className="relative w-32 h-32 rounded-full bg-gradient-to-br from-purple-400/50 to-purple-600/50 flex items-center justify-center border-2 border-purple-400/50"
-              animate={{
-                boxShadow: [
-                  "0 0 20px #8800ff",
-                  "0 0 40px #8800ff",
-                  "0 0 20px #8800ff",
-                ],
-                scale: [1, 1.05, 1],
-              }}
-              transition={{
-                boxShadow: { duration: 2, repeat: Infinity },
-                scale: { duration: 3, repeat: Infinity },
-              }}
-            >
-              <Sprout className="w-16 h-16 text-white" />
-            </motion.div>
-
-            {/* Scan Line */}
-            <motion.div
-              className="absolute left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-purple-400 to-transparent"
-              animate={{ y: [-250, 250], opacity: [0, 1, 0] }}
-              transition={{ duration: 4, repeat: Infinity }}
-            />
-          </div>
-
-          {/* ---------------------------------------- */}
-          {/* RIGHT — TEXT CONTENT                     */}
-          {/* ---------------------------------------- */}
-          <div>
-            <motion.div
-              className="inline-block px-4 py-2 rounded-full bg-purple-500/10 border border-purple-400/30 mb-6"
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-            >
-              <span className="font-mono text-purple-400 tracking-widest">
-                03 / PLANT CARE
-              </span>
-            </motion.div>
-
-            <motion.h2
-              className="text-6xl mb-6 tracking-wider"
-              style={{
-                background: "linear-gradient(to right, #8800ff, #ff00ff)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                letterSpacing: "0.2em",
-              }}
-            >
-              PLANT CARE SYSTEM
-            </motion.h2>
-
-            <motion.p className="text-xl text-gray-400 mb-8 leading-relaxed">
-              The CNN model detects your plant species, and the chatbot integrates
-              image diagnostics with live weather details to give accurate remedies
-              and growth guidance.
-            </motion.p>
-
-            <motion.div className="flex gap-4">
-              <div className="px-6 py-3 bg-purple-500/5 border border-purple-500/30 rounded-lg">
-                <div className="font-mono text-purple-400">1M+</div>
-                <div className="text-sm text-gray-500">Data Points</div>
-              </div>
-              <div className="px-6 py-3 bg-purple-500/5 border border-purple-500/30 rounded-lg">
-                <div className="font-mono text-purple-400">AI</div>
-                <div className="text-sm text-gray-500">Powered</div>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
+      <PlantCareSection />
 
       {/* ===================================================== */}
       {/* SECTION 4 — CHAT WITH VRIKZO                          */}
       {/* ===================================================== */}
-      <section className="relative min-h-screen flex items-center justify-center px-6 py-20">
-        <div className="max-w-7xl w-full text-center">
-          {/* ---------------------------------------- */}
-          {/* Floating UI Elements                     */}
-          {/* ---------------------------------------- */}
-          <div className="relative h-[500px] flex items-center justify-center mb-16">
-            {[...Array(8)].map((_, i) => {
-              const positions = [
-                { x: -200, y: -150 },
-                { x: 200, y: -120 },
-                { x: -180, y: 80 },
-                { x: 180, y: 100 },
-                { x: -100, y: -50 },
-                { x: 120, y: -80 },
-                { x: -150, y: 150 },
-                { x: 150, y: 160 },
-              ];
-
-              return (
-                <motion.div
-                  key={`bubble-${i}`}
-                  className="absolute w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400/20 to-cyan-400/20 border border-emerald-400/30 flex items-center justify-center"
-                  style={{
-                    left: "50%",
-                    top: "50%",
-                    marginLeft: positions[i].x,
-                    marginTop: positions[i].y,
-                  }}
-                  animate={{
-                    y: [0, -20, 0],
-                    opacity: [0.3, 0.8, 0.3],
-                    scale: [1, 1.1, 1],
-                  }}
-                  transition={{
-                    duration: 4,
-                    repeat: Infinity,
-                    delay: i * 0.3,
-                  }}
-                >
-                  <MessageCircle className="w-6 h-6 text-emerald-400" />
-                </motion.div>
-              );
-            })}
-
-            {/* Center Core */}
-            <motion.div
-              className="relative w-48 h-48 rounded-full flex items-center justify-center bg-gradient-to-br from-emerald-400 to-cyan-400"
-              animate={{
-                boxShadow: [
-                  "0 0 40px rgba(0,255,136,0.4)",
-                  "0 0 60px rgba(0,230,255,0.6)",
-                  "0 0 40px rgba(0,255,136,0.4)",
-                ],
-              }}
-              transition={{ duration: 3, repeat: Infinity }}
-            >
-              <motion.div
-                className="w-full h-full rounded-full border-4 border-white/20 flex items-center justify-center"
-                animate={{ rotate: 360 }}
-                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-              >
-                <MessageCircle className="w-24 h-24 text-white" />
-              </motion.div>
-            </motion.div>
-
-            {/* Waves */}
-            {[...Array(3)].map((_, i) => (
-              <motion.div
-                key={`wave-${i}`}
-                className="absolute rounded-full border-2 border-emerald-400/30"
-                style={{ width: "200px", height: "200px" }}
-                animate={{ scale: [1, 2.5, 1], opacity: [0.6, 0, 0.6] }}
-                transition={{
-                  duration: 4,
-                  repeat: Infinity,
-                  delay: i * 1.3,
-                }}
-              />
-            ))}
-          </div>
-
-          {/* ---------------------------------------- */}
-          {/* CHAT LABEL & TEXT                         */}
-          {/* ---------------------------------------- */}
-          <motion.div
-            className="inline-block px-4 py-2 mb-6 rounded-full bg-emerald-500/10 border border-emerald-400/30"
-          >
-            <span className="font-mono text-emerald-400 tracking-widest">
-              04 / AI ASSISTANT
-            </span>
-          </motion.div>
-
-          <motion.h2
-            className="text-7xl mb-6 tracking-wider"
-            style={{
-              background: "linear-gradient(90deg,#00ff88,#00e6ff)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            }}
-          >
-            LET'S CHAT WITH VRIKZO
-          </motion.h2>
-
-          <motion.p className="text-xl text-gray-400 mb-12 max-w-3xl mx-auto leading-relaxed">
-            Get instant answers from our AI-powered plant care expert. Real-time
-            assistance for all your botanical questions.
-          </motion.p>
-
-          {/* ---------------------------------------- */}
-          {/* CHAT BUTTON                                */}
-          {/* ---------------------------------------- */}
-          <motion.button
-            className="relative px-12 py-5 rounded-full overflow-hidden font-mono tracking-widest bg-gradient-to-br from-emerald-500 to-cyan-500"
-            onClick={() => onOpenChatbot?.()}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <motion.div
-              className="absolute inset-0 bg-white/20"
-              animate={{ x: ["-100%", "100%"] }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "linear",
-              }}
-            />
-            <span className="relative text-black flex items-center gap-3">
-              <MessageCircle className="w-5 h-5" />
-              START CONVERSATION
-            </span>
-          </motion.button>
-
-          {/* Energy Line */}
-          <motion.div
-            className="mt-16 h-0.5 max-w-4xl mx-auto rounded-full"
-            style={{
-              background:
-                "linear-gradient(90deg, transparent, #00ff88, #00e6ff, transparent)",
-            }}
-            animate={{ opacity: [0.3, 0.8, 0.3] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          />
-        </div>
-      </section>
+      <ChatCtaSection onOpenChatbot={onOpenChatbot} />
 
       {/* ===================================================== */}
-      {/* SECTION 5 — CALL TO ACTION                            */}
+      {/* SECTION 5 — CALL TO ACTION (ACTIVATE NOW)             */}
       {/* ===================================================== */}
-      <section className="relative min-h-screen flex items-center justify-center px-6 py-20">
-        <div className="max-w-6xl w-full text-center">
-          {/* ---------------------------------------- */}
-          {/* VISUAL GRID                               */}
-          {/* ---------------------------------------- */}
-          <div className="relative h-[600px] flex items-center justify-center mb-16">
-            {[...Array(6)].map((_, i) => (
-              <motion.div
-                key={`ring-${i}`}
-                className="absolute rounded-full border"
-                style={{
-                  width: `${120 + i * 80}px`,
-                  height: `${120 + i * 80}px`,
-                  borderColor: [
-                    "#00ff88",
-                    "#00e6ff",
-                    "#8800ff",
-                  ][i % 3],
-                  opacity: 0.3,
-                }}
-                animate={{
-                  scale: [1, 1.05, 1],
-                  rotate: i % 2 === 0 ? 360 : -360,
-                }}
-                transition={{
-                  scale: { duration: 3, repeat: Infinity },
-                  rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                }}
-              />
-            ))}
+      <ActivateCtaSection onActivate={() => setShowLoginDialog(true)} />
 
-            {/* Energy Beams */}
-            {[...Array(12)].map((_, i) => {
-              const angle = (i / 12) * Math.PI * 2;
-
-              return (
-                <motion.div
-                  key={`beam-${i}`}
-                  className="absolute w-1 h-40 origin-bottom"
-                  style={{
-                    background: `linear-gradient(to top, ${
-                      ["#00ff88", "#00e6ff", "#8800ff"][i % 3]
-                    }, transparent)`,
-                    left: "50%",
-                    bottom: "50%",
-                    transform: `rotate(${(i / 12) * 360}deg)`,
-                  }}
-                  animate={{ opacity: [0.2, 0.6, 0.2] }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    delay: i * 0.1,
-                  }}
-                />
-              );
-            })}
-
-            {/* Center Core */}
-            <motion.div
-              className="relative w-40 h-40 rounded-full flex items-center justify-center bg-gradient-to-br from-emerald-500 via-cyan-500 to-purple-500"
-              animate={{
-                boxShadow: [
-                  "0 0 40px #00ff88",
-                  "0 0 60px #00e6ff",
-                  "0 0 40px #8800ff",
-                ],
-                rotate: 360,
-              }}
-              transition={{
-                rotate: { duration: 10, repeat: Infinity, ease: "linear" },
-                boxShadow: { duration: 3, repeat: Infinity },
-              }}
-            >
-              <Zap className="w-20 h-20 text-white" />
-            </motion.div>
-          </div>
-
-          {/* ---------------------------------------- */}
-          {/* CTA TEXT                                   */}
-          {/* ---------------------------------------- */}
-          <motion.h2
-            className="text-7xl mb-8 tracking-wider"
-            style={{
-              background:
-                "linear-gradient(90deg,#00ff88,#00e6ff,#8800ff)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              letterSpacing: "0.15em",
-            }}
-          >
-            GROW WITH VRIKZO
-          </motion.h2>
-
-          <motion.p
-            className="text-2xl text-gray-400 mb-12 max-w-3xl mx-auto"
-          >
-            Your queries are processed into a well-organized format and delivered
-            right to your inbox.
-          </motion.p>
-
-          {/* ---------------------------------------- */}
-          {/* CTA BUTTON                                */}
-          {/* ---------------------------------------- */}
-          <motion.button
-            onClick={() => setShowLoginDialog(true)}
-            className="group relative px-16 py-6 text-2xl rounded-full bg-gradient-to-r from-emerald-500 via-cyan-500 to-purple-500 text-white tracking-widest overflow-hidden"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-              animate={{ x: ["-200%", "200%"] }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "linear",
-              }}
-            />
-
-            <span className="relative">ACTIVATE NOW</span>
-          </motion.button>
-
-          <motion.div
-            className="mt-16 h-0.5 max-w-4xl mx-auto rounded-full"
-            style={{
-              background:
-                "linear-gradient(90deg,transparent,#00ff88,#00e6ff,#8800ff,transparent)",
-            }}
-            animate={{ opacity: [0.3, 0.8, 0.3] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          />
-        </div>
-      </section>
-
-      {/* ===================================================== */}
-      {/* LOGIN DIALOG                                           */}
-      {/* ===================================================== */}
+      {/* LOGIN DIALOG */}
       <LoginDialog open={showLoginDialog} onOpenChange={setShowLoginDialog} />
     </div>
   );
