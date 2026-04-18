@@ -62,6 +62,7 @@ In a new terminal simultaneously, move to directory
 ```bash
   python -m venv .venv
   .\venv\Scripts\activate
+  pip install -r requirements.txt
 ```
 
 Run the python Script
@@ -81,6 +82,10 @@ To run this project, you will need to add the following environment variables to
 `OPENWEATHER_API_KEY=your_openweather_api_key` \
 `EMAIL_USER=your_email_address` \
 `EMAIL_PASS=your_email_password` 
+
+**Frontend Environment (.env in `plant-care-frontend`)** \
+`VITE_API_URL=http://localhost:5000` \
+`VITE_PREDICT_URL=http://localhost:8000/predict` 
 
 The application requires a valid MongoDB Atlas connection to run.
 
@@ -106,23 +111,23 @@ MongoDB Setup Steps:
 #### Diagnose Plant Disease
 
 ```http
- POST /api/diagnose
+ POST /api/detect
 ```
 Uploads a plant image and returns diagnosis details and AI-generated recommendations.
+
+#### Chat Assistant
+
+```http
+  POST /api/chat
+```
+Sends a message and optional weather data to the Gemini AI plant expert.
 
 #### Schedule Care Reminder
 
 ```http
-  POST /api/reminders
+  POST /api/reminders/create
 ```
 Creates a watering or treatment reminder for scheduled email notifications.
-
-#### Get Scheduled Reminders
-
-```http
-GET /api/reminders
-```
-Fetches existing care reminders for a user.
 
 <br>
 

@@ -11,7 +11,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-package-lock.json
 .pnpm-store/
 
 # Build output
@@ -31,6 +30,12 @@ build/
 logs/
 tmp/
 temp/
+
+# Runtime error dumps & debug output (may contain API keys or stack traces)
+error_log.json
+out.txt
+test_out.txt
+*.out.txt
 
 # Uploaded files
 uploads/
@@ -101,6 +106,11 @@ coverage/
 .nyc_output/
 test-results/
 junit.xml
+
+# Ad-hoc test scripts (should be in a tests/ directory, not root)
+test-gemini.js
+test_gemini.js
+test_import.py
 
 # -------------------------
 # 🧰 IDE / Editor
