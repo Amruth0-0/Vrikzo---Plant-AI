@@ -3,8 +3,8 @@ import nodemailer from "nodemailer";
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.EMAIL_USER || "amulyah66@gmail.com",
-    pass: process.env.EMAIL_PASS || "vrikzo123",
+    user: process.env.EMAIL_USER || "[EMAIL_ADDRESS]",
+    pass: process.env.EMAIL_PASS || "[EMAIL_PASSWORD]",
   },
 });
 
