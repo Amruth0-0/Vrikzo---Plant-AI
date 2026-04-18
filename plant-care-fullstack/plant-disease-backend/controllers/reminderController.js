@@ -1,16 +1,50 @@
 // controllers/reminderController.js
+import { body, validationResult } from "express-validator";
 import Reminder from "../models/Reminder.js";
 import EmailUser from "../models/EmailUser.js";
 
+/* ---------------------------------------------------------------------- */
+/*  Validation rules — import and spread into your route definition        */
+/* ---------------------------------------------------------------------- */
+export const reminderValidationRules = [
+  body("email")
+    .isEmail().withMessage("A valid email address is required.")
+    .normalizeEmail(),
+
+  body("plantName")
+    .trim()
+    .notEmpty().withMessage("plantName is required.")
+    .isLength({ max: 100 }).withMessage("plantName must be 100 characters or fewer.")
+    .escape(),
+
+  body("action")
+    .trim()
+    .isIn(["water", "treatment"]).withMessage("action must be 'water' or 'treatment'."),
+
+  body("scheduleDate")
+    .notEmpty().withMessage("scheduleDate is required.")
+    .isISO8601().withMessage("scheduleDate must be a valid ISO 8601 date."),
+
+  body("remedyText")
+    .optional()
+    .trim()
+    .isLength({ max: 500 }).withMessage("remedyText must be 500 characters or fewer."),
+];
+
+/* ---------------------------------------------------------------------- */
+/*  Controller                                                              */
+/* ---------------------------------------------------------------------- */
 export const createReminder = async (req, res) => {
+  // Return all validation errors at once
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   try {
     const { email, plantName, action, scheduleDate, remedyText } = req.body;
 
-    if (!email || !plantName || !action || !scheduleDate) {
-      return res.status(400).json({ message: "All fields are required." });
-    }
-
-    // Save user email if not present
+    // Save user email if not already recorded
     let user = await EmailUser.findOne({ email });
     if (!user) {
       user = new EmailUser({ email });
@@ -18,16 +52,13 @@ export const createReminder = async (req, res) => {
     }
 
     const parsed = new Date(scheduleDate);
-    if (isNaN(parsed.getTime())) {
-      return res.status(400).json({ message: "Invalid scheduleDate" });
-    }
 
     const reminder = new Reminder({
       email,
       plantName,
       action,
       scheduleDate: parsed,
-      remedyText
+      remedyText: remedyText || "",
     });
 
     await reminder.save();
@@ -42,3 +73,4 @@ export const createReminder = async (req, res) => {
     res.status(500).json({ message: "Server error." });
   }
 };
+

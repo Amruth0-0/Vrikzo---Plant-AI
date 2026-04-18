@@ -8,7 +8,10 @@ const ReminderSchema = new mongoose.Schema({
   scheduleDate: { type: Date, required: true },
   remedyText: { type: String, default: "" },
   createdAt: { type: Date, default: Date.now },
+  // Set by the scheduler before sending — prevents double-fire on crash/restart
+  sentAt: { type: Date, default: null },
 });
 
 const Reminder = mongoose.models.Reminder || mongoose.model("Reminder", ReminderSchema);
 export default Reminder;
+

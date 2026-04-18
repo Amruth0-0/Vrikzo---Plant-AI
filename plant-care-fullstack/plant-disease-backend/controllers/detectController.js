@@ -1,10 +1,8 @@
 import axios from "axios";
-import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 import FormData from "form-data";
-
-dotenv.config();
+import { geminiModel } from "../config/gemini.js";
 
 /**
  * 🌿 detectDisease Controller
@@ -56,6 +54,7 @@ export const detectDisease = async (req, res) => {
     // 🧩 Extract data safely
     const diseaseName = detectionResult?.diseaseName || detectionResult?.plant || "Unknown";
     const confidence = detectionResult?.confidence || "N/A";
+    const conditionLabel = detectionResult?.condition || diseaseName;
 
     if (!diseaseName || diseaseName === "Unknown") {
       return res.status(404).json({
@@ -65,32 +64,30 @@ export const detectDisease = async (req, res) => {
     }
 
     // 🌿 Step 3 — Build prompt for Gemini
+    // Note: diagnosisContext is built inline here from the detection result
+    const diagnosisContext = conditionLabel.toLowerCase().includes("healthy")
+      ? "The plant appears healthy — confirm and give maintenance tips."
+      : `The detected condition is: ${conditionLabel}. Suggest treatment and prevention.`;
+
     const prompt = `
 You are VrikZo Intelligence 🌿, an expert plant care AI.
-Detected disease: **${diseaseName}** (Confidence: ${confidence}).
+Detected plant: **${diseaseName}** (Confidence: ${confidence}%).
 ${diagnosisContext}
 
 Provide a short, clear, structured response under 60 words:
 - 🌿 Observation: one sentence on the issue
 - 💊 Remedy: 2–3 actionable treatment steps
 - 🌞 Care Tip: how to maintain the plant and prevent recurrence
-- ❗ If diseaseName sounds unknown or healthy, say it’s likely healthy.
+- ❗ If the plant is healthy, say so and give general care advice.
 
 End naturally with: "Would you like more help or advice?"
 `;
 
-    // ⚡ Step 4 — Call Gemini API
+    // ⚡ Step 4 — Call Gemini API via shared model
     let aiResponseText = "";
     try {
-      const geminiResponse = await axios.post(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-        {
-          contents: [{ parts: [{ text: prompt }] }],
-        }
-      );
-
-      aiResponseText =
-        geminiResponse.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+      const result = await geminiModel.generateContent(prompt);
+      aiResponseText = result.response?.text()?.trim() || "";
     } catch (geminiErr) {
       console.error("💥 Gemini API Error:", geminiErr.message);
       aiResponseText = "Unable to fetch care advice at the moment. 🌱";
@@ -119,3 +116,4 @@ End naturally with: "Would you like more help or advice?"
     });
   }
 };
+

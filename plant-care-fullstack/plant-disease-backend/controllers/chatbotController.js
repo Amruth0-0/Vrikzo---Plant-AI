@@ -1,23 +1,10 @@
-import dotenv from "dotenv";
-import fetch from "node-fetch";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-dotenv.config();
+import { geminiModel } from "../config/gemini.js";
 
 /* -------------------------------------------------------------------------- */
-/*                        ENVIRONMENT VALIDATION                              */
+/*                             WEATHER HELPER                                  */
 /* -------------------------------------------------------------------------- */
 
-if (!process.env.GEMINI_API_KEY) {
-  throw new Error("GEMINI_API_KEY is required");
-}
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({
-  model: "gemini-2.5-flash",
-});
-
-async function getWeather(city = "bangalore") {
+async function getWeather(location = "Bangalore") {
   const apiKey = process.env.OPENWEATHER_API_KEY;
 
   if (!apiKey) {
@@ -26,14 +13,18 @@ async function getWeather(city = "bangalore") {
   }
 
   try {
-    const url = `https://api.openweathermap.org/data/2.5/weather?q=${city.trim()}&appid=${apiKey}&units=metric`;
+    // Support both "City" names and "lat,lon" coordinate strings
+    const isCoords = /^-?\d+(\.\d+)?,-?\d+(\.\d+)?$/.test(location.trim());
+    const query = isCoords
+      ? `lat=${location.split(",")[0]}&lon=${location.split(",")[1]}`
+      : `q=${encodeURIComponent(location.trim())}`;
+
+    const url = `https://api.openweathermap.org/data/2.5/weather?${query}&appid=${apiKey}&units=metric`;
     const response = await fetch(url);
     const data = await response.json();
 
     if (!response.ok || data.cod !== 200) {
-      console.error(
-        //`🌩️ Weather API error: ${data.message || response.statusText}`
-      );
+      console.error(`🌩️ Weather API error: ${data.message || response.statusText}`);
       return null;
     }
 
@@ -41,7 +32,7 @@ async function getWeather(city = "bangalore") {
       temp: data.main?.temp ?? "N/A",
       humidity: data.main?.humidity ?? "N/A",
       condition: data.weather?.[0]?.description ?? "N/A",
-      city: data.name ?? city,
+      city: data.name ?? location,
     };
   } catch (err) {
     console.error("🌩️ Weather fetch error:", err.message);
@@ -129,12 +120,12 @@ AI:
     let result;
 
     try {
-      result = await model.generateContent(prompt);
+      result = await geminiModel.generateContent(prompt);
     } catch (err) {
       if (err.message.includes("503")) {
         console.warn("⚠️ Gemini overloaded — retrying in 2 seconds...");
         await new Promise((r) => setTimeout(r, 2000));
-        result = await model.generateContent(prompt);
+        result = await geminiModel.generateContent(prompt);
       } else {
         throw err;
       }
@@ -172,7 +163,8 @@ AI:
   } catch (err) {
     console.error("💥 Chatbot error:", err.stack || err.message);
 
-    return res.json({
+    // M-6 fix: always return HTTP 500 on server-side errors, not 200
+    return res.status(500).json({
       reply: {
         observation: "Sorry 🌱, I couldn't reach VrikZo Intelligence.",
         remedy: "",
@@ -182,3 +174,4 @@ AI:
     });
   }
 };
+

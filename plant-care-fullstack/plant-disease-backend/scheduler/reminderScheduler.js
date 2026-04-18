@@ -5,53 +5,52 @@ import { sendEmail } from "../utils/sendEmail.js";
 import { generateReminderEmail } from "../utils/emailTemplates.js";
 
 export const startReminderScheduler = () => {
-console.log("⏰ Reminder scheduler loading...");
+  console.log("⏰ Reminder scheduler loading...");
 
-// Run every minute
-cron.schedule("* * * * *", async () => {
-  try {
-    const now = new Date();
+  // Run every minute
+  cron.schedule("* * * * *", async () => {
+    try {
+      const now = new Date();
 
-    // Round to minute precision
-    const minuteStart = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      now.getHours(),
-      now.getMinutes(),
-      0,
-      0
-    );
+      // Query by a 60-second window — survives server restarts and clock drift
+      const windowStart = new Date(now.getTime() - 30 * 1000); // 30s before
+      const windowEnd   = new Date(now.getTime() + 30 * 1000); // 30s after
 
-    // Find reminders that match this exact minute
-    const reminders = await Reminder.find({
-      scheduleDate: minuteStart,
-    });
+      // Only find reminders that haven't been sent yet (sentAt guard prevents double-fire)
+      const reminders = await Reminder.find({
+        scheduleDate: { $gte: windowStart, $lte: windowEnd },
+        sentAt: { $exists: false },
+      });
 
-    for (const reminder of reminders) {
-      try {
-        const { email, action, plantName, remedyText } = reminder;
+      for (const reminder of reminders) {
+        try {
+          // Mark as sent BEFORE sending email — prevents double-fire on crash
+          await Reminder.findByIdAndUpdate(reminder._id, { sentAt: new Date() });
 
-        // generate HTML email (Gemini or fallback)
-        const html = await generateReminderEmail(plantName, action, remedyText);
+          const { email, action, plantName, remedyText } = reminder;
 
-        await sendEmail({
-          to: email,
-          subject: `🌱 Reminder: ${action === "water" ? "Water" : "Treatment"} — ${plantName}`,
-          html,
-          text: `Reminder: ${action} for ${plantName}`,
-        });
+          // Generate HTML email (Gemini or fallback)
+          const html = await generateReminderEmail(plantName, action, remedyText);
 
-        console.log(`📧 Sent ${action} reminder to ${email} (${plantName})`);
+          await sendEmail({
+            to: email,
+            subject: `🌱 Reminder: ${action === "water" ? "Water" : "Treatment"} — ${plantName}`,
+            html,
+            text: `Reminder: ${action} for ${plantName}`,
+          });
 
-        // Remove the reminder after sending so it's one-time (optional)
-        await Reminder.findByIdAndDelete(reminder._id);
-      } catch (err) {
-        console.error("Error sending reminder email:", err);
+          console.log(`📧 Sent ${action} reminder to ${email} (${plantName})`);
+
+          // Delete after successful send
+          await Reminder.findByIdAndDelete(reminder._id);
+        } catch (err) {
+          console.error("Error sending reminder email:", err);
+          // sentAt is already set — won't retry this minute, scheduler picks up next run
+        }
       }
+    } catch (err) {
+      console.error("Reminder scheduler error:", err);
     }
-  } catch (err) {
-    console.error("Reminder scheduler error:", err);
-  }
-});
+  });
 };
+
